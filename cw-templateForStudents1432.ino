@@ -43,10 +43,7 @@ String display_or;
 #define Column2 A2
 #define trimPot A3
 
-// Define number of steps per revolution
-// Our stepper has 20 steps per revolution
-// This is equivalent to
-// 18 degrees of a turn per step
+
 #define stepsPerRevolution 20
 float revPsec = 0.0;
 // Give the motor control pins names:
@@ -193,8 +190,6 @@ void setup() {
   display.setTextWrap(false); // do not wrap the text
   display.setTextSize(1);     // Normal 1:1 pixel scale
   display.clearDisplay();
-  // Show the display buffer on the screen. You MUST call display() after
-  // drawing commands to make them visible on screen!
   display.display();
 
   // initialize Timer1
@@ -210,17 +205,9 @@ void setup() {
   TCCR1B |= (1 << CS11); // Sets bit CS11 in TCCR1B
   TCCR1B |= (1 << CS10); // and CS10
   //the clock source is divided by 64, i.e. one clock cycle every 64 / (16 * 10^6) = 4 * 10^(-6) = 0.000004s
-  
-  // This is achieved by shifting binary 1 (0b00000001)
-  // to the left by CS11 or CS10 bits. This is then bitwise
-  // OR-ed into the current value of TCCR1B, which effectively set
-  // this one bit high.
-  // enable global interrupts:
+
   sei();
 
-  // initialise all modules in the system
-  // snip
-  // in other words, set all init_module_clock variables to true here
   init_module5_clock = true;
   init_module6_clock = true;
   init_module7_clock = true;
@@ -233,20 +220,14 @@ void setup() {
   Wire.endTransmission(true);   
 }
 
-// here is the ISR executed by the CPU when the corresponding interrupt occurs
 ISR(TIMER1_OVF_vect)
 {
-  TCNT1=PRELOAD; // reload the timer preload
-
-  //////////////////////////////////////////////////////////
-  // motor module
-  //////////////////////////////////////////////////////////
+  TCNT1=PRELOAD; 
   {
     static unsigned long m;
     static unsigned char thisStep = 0;
 
     if (((long)(micros()-m)) > (1000000L / (stepsPerRevolution*abs(revPsec)))) {
-      // you can control the speed and direction by assigning the revPsec variable
       m=micros();
 
       switch (thisStep) {
@@ -280,13 +261,7 @@ ISR(TIMER1_OVF_vect)
   }
 }
 
-/*
- * Top left is position 0,0
- * bottom right is position 20, 7
- * There are 8 lines of text at text size 1
- * There are 21 columns of text at size 1
- * These need to be scaled for different text sizes
- */
+
 void oled(unsigned char x, unsigned char y, const __FlashStringHelper *s) {
   byte *s1 = (byte *)s;
   display.setCursor(x*6,y*8);                         // start co-ordinates
@@ -297,7 +272,6 @@ void oled(unsigned char x, unsigned char y, const __FlashStringHelper *s) {
   display.display();                                  // show it
 }
 
-// returns the number on the key
 char n(unsigned char kI) {
   if (kI>=11) return(-1);
   else if (kI==10) return(0);
@@ -333,19 +307,10 @@ void loop()
         if (module_doStep) {
           switch(module_state){
             case -1: {
-              // stop motor, apply the brakes
-              // stop trimpot and motor monitor modules
-              // stop accel and key displayer modules
-              // stop the motor, zero the velocity of the motor
-              // display "Invalid input." on the oled
+             
             }
             case 0: {
-              // stop motor, apply the brakes
-              // stop trimpot and motor monitor modules
-              // stop accel and key displayer modules
-              // stop the motor, zero the velocity of the motor
-              // display "Login password:" on the oled
-              //oled(0, 5, F("HELD PRESS"));
+             
               init_module9_clock = true;
               // userToken is zeroed      
               init_module10_clock = true;
@@ -354,12 +319,7 @@ void loop()
                 
             }
             case 1: {
-              // stop motor, apply the brakes
-              // stop trimpot and motor monitor modules
-              // stop accel and key displayer modules
-              // stop the motor, zero the velocity of the motor
-              // check the keyStatus for pressed keys
-              // if no key is normally pressed, stay in this state
+              
                init_module9_clock = false;
               // userToken is zeroed      
               init_module10_clock = false;
@@ -381,15 +341,7 @@ void loop()
               break;
             }
             case 2: {
-                 //Serial.println( T);
-              // stop motor, apply the brakes
-              // stop trimpot and motor monitor modules
-              // stop accel and key displayer modules
-              // stop the motor, zero the velocity of the motor
-              // is # pressed? if so, check userToken == password and go to the open state 3
-              // else go to the error state -1
-              // check for validity of the input, i.e. ignore * button, etc
-              // if all's well userToken = userToken*10+n(keyIndex) and go back to state 1
+                
               init_module9_clock = false;
               // userToken is zeroed      
               init_module10_clock = false;
@@ -421,15 +373,11 @@ void loop()
               // userToken is zeroed      
               init_module10_clock = false;
                     init_module6_clock = false;
-              // this is the open state
-              // release all modules and let them run
-              // draw the key grid on the oled. you may use |, -, + and space too
-  
-              // release the breaks
-              // move to state 4
+             
+              
             }
             case 4: {
-              // wait for *h+#h event, if so shut down and go to state 0
+           
             }
             default: module_state=0;
           }
@@ -458,10 +406,9 @@ void loop()
         }
 
         if (module_doStep) {
-          //analogRead(trimPot) and calculate the revPsec variable for the revolutions per second  
-        // trimpotValue = revPsec;
+          
          trimpotValue = analogRead(trimPot);    
-          // add a bit of hysteresis to the reading of the trimPot and check on the sensor pins 
+       
           revPsec = 16.0/1023.0 * trimpotValue - 8;
                if(analogRead(sen0) == 0)
                {
@@ -524,11 +471,6 @@ display.display();
         }
 
         if (module_doStep) {
-          // analogRead(sen0) and analogRead(sen1) to see if the motor is ok
-
-          
-          // if the motor is off stop the trimpot module and assign 0.0 to the revPsec to stop the motor
-          // else show "motor ok" and the revPsec on the oled
         }
     }
 
@@ -574,9 +516,6 @@ display.display();
           Wire.beginTransmission(MPU_6050);
           Wire.write(ACCEL_XOUT_HI);
           Wire.endTransmission(false);
-          // Attempt to read 2 consecutive bytes from the MPU6050.
-          // From above, these will be the MSB of the Z-component
-          // of acceleration followed by its LSB.
           Wire.requestFrom(MPU_6050, 8 ,true); // read 2 registers
           AccX = Wire.read() << 8;
           AccX |= Wire.read();
@@ -671,10 +610,6 @@ display.display();
           oled(6, 5, F("|"));
           oled(3, 7, F("|"));
           oled(6, 7, F("|"));
-          // this is my keypad module. it has 12 FSMs running it it as threads
-          // chacking on the keys and updating the keyStatus[] array
-          // this can be done in 4 modules of 3 threads each, i.e.
-          // one module per row which will improve performance
         testRow(0);
         switch(state1)
         {
@@ -990,10 +925,6 @@ display.display();
         }
 
         if (module_doStep) {
-          // this is my key displayer module
-          // it too runs 12 threads one per key
-          // again, this can be run as 4 modules of 3 threads each similar to the 
-          // keypad module 9
          switch(keyStatus[1])
         {
           case partialPRESS:
